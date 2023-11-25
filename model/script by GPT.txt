@@ -1,0 +1,41 @@
+const { exec } = require('child_process');
+const fs = require('fs');
+
+// AiClassification 함수 정의
+function AiClassification(callback) {
+    // Python 스크립트 실행
+    exec('python ./detect.py --weight ./runs/train/trash_yolov5s_results3/weights/best.pt --img 640 --conf 0.4 --source ./data/images/fromChrome2.jpg', (error, stdout, stderr) => {
+        if (error) {
+            console.error(`실행 오류: ${error}`);
+            return callback(error);
+        }
+        if (stderr) {
+            console.error(`오류 메시지: ${stderr}`);
+            return callback(stderr);
+        }
+
+        // 결과 처리: 텍스트 저장
+        fs.writeFile('output.txt', stdout, (err) => {
+            if (err) {
+                console.error(`텍스트 파일 저장 오류: ${err}`);
+                return callback(err);
+            }
+            console.log('텍스트 결과가 output.txt에 저장되었습니다.');
+
+            // 이미지 파일 처리
+            // 예시 경로, 실제 경로는 Python 스크립트 결과에 따라 다를 수 있음
+            const imagePath = 'runs/detect/exp19/detected_image.jpg'; 
+            fs.copyFile(imagePath, 'saved_image.jpg', (err) => {
+                if (err) {
+                    console.error(`이미지 파일 저장 오류: ${err}`);
+                    return callback(err);
+                }
+                console.log('이미지 결과가 saved_image.jpg에 저장되었습니다.');
+                callback(null, '작업 완료');
+            });
+        });
+    });
+}
+
+// 함수를 모듈로 내보내기
+module.exports = { AiClassification };
